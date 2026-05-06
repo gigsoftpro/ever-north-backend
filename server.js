@@ -68,10 +68,10 @@ app.use(
   })
 );
 
-// ─── Routes ──────────────────────────────────────────────────────────────────
-app.use('/api/auth',    authRoutes);
-app.use('/api/media',   mediaRoutes);
-app.use('/api/content', contentRoutes);
+const ApiVersion = '/api/v1/'
+app.use(`/api/auth`,    authRoutes);
+app.use(`/api/media`,   mediaRoutes);
+app.use(`/api/content`, contentRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

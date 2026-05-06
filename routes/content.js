@@ -2,12 +2,8 @@ const router  = require('express').Router();
 const c       = require('../controllers/contentController');
 const { protect } = require('../middleware/auth');
 
-// ─── PUBLIC ENDPOINTS (frontend fetches these) ────────────────────────────────
-
-// Full site data in one shot
 router.get('/site', c.getSiteData);
 
-// Individual section reads
 router.get('/hero',         c.getHero);
 router.get('/about',        c.getAbout);
 router.get('/services',     c.getServices);
@@ -19,14 +15,10 @@ router.get('/header',       c.getHeader);
 router.get('/nav',          c.getNavLinks);
 router.get('/footer',       c.getFooter);
 
-// Contact form submission (public)
 router.post('/contact', c.submitContact);
-
-// ─── PROTECTED ENDPOINTS (CMS admin panel) ────────────────────────────────────
 
 router.use(protect); // everything below requires JWT
 
-// Hero
 router.put('/hero', c.updateHero);
 
 // About
