@@ -4,7 +4,9 @@ const { protect } = require('../middleware/auth');
 
 router.get('/site', c.getSiteData);
 
-router.get('/hero',         c.getHero);
+// Hero slides (public - active only)
+router.get('/hero',              c.getHeroSlides);
+// router.get('/hero',         c.getHero);
 router.get('/about',        c.getAbout);
 router.get('/services',     c.getServices);
 router.get('/cleaning',     c.getCleaningSection);
@@ -19,7 +21,13 @@ router.post('/contact', c.submitContact);
 
 router.use(protect); // everything below requires JWT
 
-router.put('/hero', c.updateHero);
+// Hero slides CRUD (admin)
+router.get('/hero/all',         c.getAllHeroSlides);
+router.post('/hero/slides',     c.createHeroSlide);
+router.put('/hero/slides/:id',  c.updateHeroSlide);
+router.delete('/hero/slides/:id', c.deleteHeroSlide);
+
+// router.put('/hero', c.updateHero);
 
 // About
 router.put('/about', c.updateAbout);

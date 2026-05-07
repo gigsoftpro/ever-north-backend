@@ -867,11 +867,153 @@ async function deleteContactSubmission(req, res, next) {
   }
 }
 
+// ─── HERO SLIDES ──────────────────────────────────────────────────────────────
+
+async function getHeroSlides(req, res, next) {
+  try {
+    const [rows] = await pool.execute(
+      "SELECT * FROM hero_slides WHERE is_active = 1 ORDER BY sort_order ASC",
+    );
+    const data = await Promise.all(
+      rows.map((r) => attachMedia(req, r, "bg_image", "overlay_image")),
+    );
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getAllHeroSlides(req, res, next) {
+  try {
+    const [rows] = await pool.execute(
+      "SELECT * FROM hero_slides ORDER BY sort_order ASC",
+    );
+    const data = await Promise.all(
+      rows.map((r) => attachMedia(req, r, "bg_image", "overlay_image")),
+    );
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function createHeroSlide(req, res, next) {
+  try {
+    const {
+      title,
+      highlighted_word,
+      cta_text,
+      bg_image_id,
+      overlay_image_id,
+      sort_order,
+    } = req.body;
+    if (!title)
+      return res
+        .status(400)
+        .json({ success: false, message: "title is required" });
+
+    const [result] = await pool.execute(
+      `INSERT INTO hero_slides (title, highlighted_word, cta_text, bg_image_id, overlay_image_id, sort_order)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        title,
+        highlighted_word || null,
+        cta_text || null,
+        bg_image_id || null,
+        overlay_image_id || null,
+        sort_order ?? 0,
+      ],
+    );
+    const [[row]] = await pool.execute(
+      "SELECT * FROM hero_slides WHERE id = ?",
+      [result.insertId],
+    );
+    const data = await attachMedia(req, row, "bg_image", "overlay_image");
+    res.status(201).json({ success: true, message: "Slide created", data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function updateHeroSlide(req, res, next) {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      highlighted_word,
+      cta_text,
+      bg_image_id,
+      overlay_image_id,
+      sort_order,
+      is_active,
+    } = req.body;
+
+    const [existing] = await pool.execute(
+      "SELECT id FROM hero_slides WHERE id = ?",
+      [id],
+    );
+    if (!existing.length)
+      return res
+        .status(404)
+        .json({ success: false, message: "Slide not found" });
+
+    await pool.execute(
+      `UPDATE hero_slides SET
+        title            = COALESCE(?, title),
+        highlighted_word = COALESCE(?, highlighted_word),
+        cta_text         = COALESCE(?, cta_text),
+        bg_image_id      = COALESCE(?, bg_image_id),
+        overlay_image_id = COALESCE(?, overlay_image_id),
+        sort_order       = COALESCE(?, sort_order),
+        is_active        = COALESCE(?, is_active)
+       WHERE id = ?`,
+      [
+        title,
+        highlighted_word,
+        cta_text,
+        bg_image_id ?? null,
+        overlay_image_id ?? null,
+        sort_order,
+        is_active ?? null,
+        id,
+      ],
+    );
+    const [[row]] = await pool.execute(
+      "SELECT * FROM hero_slides WHERE id = ?",
+      [id],
+    );
+    const data = await attachMedia(req, row, "bg_image", "overlay_image");
+    res.json({ success: true, message: "Slide updated", data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteHeroSlide(req, res, next) {
+  try {
+    const [existing] = await pool.execute(
+      "SELECT id FROM hero_slides WHERE id = ?",
+      [req.params.id],
+    );
+    if (!existing.length)
+      return res
+        .status(404)
+        .json({ success: false, message: "Slide not found" });
+    await pool.execute("DELETE FROM hero_slides WHERE id = ?", [req.params.id]);
+    res.json({ success: true, message: "Slide deleted" });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // ─── FULL SITE DATA (single endpoint for frontend hydration) ─────────────────
 
 async function getSiteData(req, res, next) {
   try {
     const [[hero]] = await pool.execute("SELECT * FROM hero_section LIMIT 1");
+    const [heroSlides] = await pool.execute(
+      "SELECT * FROM hero_slides WHERE is_active = 1 ORDER BY sort_order ASC",
+    );
     const [[about]] = await pool.execute("SELECT * FROM about_section LIMIT 1");
     const [services] = await pool.execute(
       "SELECT * FROM services WHERE is_active = 1 ORDER BY sort_order",
@@ -908,7 +1050,10 @@ async function getSiteData(req, res, next) {
     );
 
     // Attach media for all image-bearing sections
-    const heroData = await attachMedia(req, hero, "bg_image", "overlay_image");
+    const heroData = await Promise.all(
+      heroSlides.map((r) => attachMedia(req, r, "bg_image", "overlay_image")),
+    );
+    // const heroData = await attachMedia(req, hero, "bg_image", "overlay_image");
     const aboutData = await attachMedia(req, about, "about_image");
     const servicesData = await Promise.all(
       services.map((r) => attachMedia(req, r, "image")),
@@ -989,6 +1134,12 @@ module.exports = {
   getContactSubmissions,
   markContactRead,
   deleteContactSubmission,
+  // hero Section Sliders
+  getHeroSlides,
+  getAllHeroSlides,
+  createHeroSlide,
+  updateHeroSlide,
+  deleteHeroSlide,
   // Full site
   getSiteData,
 };

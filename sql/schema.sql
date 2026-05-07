@@ -269,3 +269,20 @@ INSERT INTO nav_links (label, href, sort_order) VALUES
 INSERT INTO footer_content (description, email, phone, copyright_text) VALUES
 ('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
 'info123@gmail.com', '01234-56789', '© Copyright 2026 Ever North. All Rights Reserved');
+
+CREATE TABLE hero_slides (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  title           VARCHAR(500),
+  highlighted_word VARCHAR(255),
+  cta_text        VARCHAR(255),
+  bg_image_id     INT,
+  overlay_image_id INT,
+  sort_order      INT DEFAULT 0,
+  is_active       TINYINT(1) DEFAULT 1,
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Optional: migrate your existing hero_section row into a slide
+INSERT INTO hero_slides (title, highlighted_word, cta_text, bg_image_id, overlay_image_id, sort_order)
+SELECT title, highlighted_word, cta_text, bg_image_id, overlay_image_id, 0
+FROM hero_section LIMIT 1;
