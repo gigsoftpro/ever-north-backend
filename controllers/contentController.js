@@ -261,14 +261,15 @@ async function updateCleaningMeta(req, res, next) {
 
 async function createCleaningItem(req, res, next) {
   try {
-    const { label, image_id, sort_order } = req.body;
+    const { label, description, image_id, sort_order } = req.body;
     if (!label)
       return res
         .status(400)
         .json({ success: false, message: "label is required" });
+
     const [result] = await pool.execute(
-      "INSERT INTO cleaning_services (label, image_id, sort_order) VALUES (?, ?, ?)",
-      [label, image_id || null, sort_order || 0],
+      "INSERT INTO cleaning_services (label, description, image_id, sort_order) VALUES (?, ?, ?, ?)",
+      [label, description || null, image_id || null, sort_order || 0],
     );
     const [[row]] = await pool.execute(
       "SELECT * FROM cleaning_services WHERE id = ?",
@@ -284,7 +285,8 @@ async function createCleaningItem(req, res, next) {
 async function updateCleaningItem(req, res, next) {
   try {
     const { id } = req.params;
-    const { label, image_id, sort_order, is_active } = req.body;
+    const { label, description, image_id, sort_order, is_active } = req.body;
+
     const [existing] = await pool.execute(
       "SELECT id FROM cleaning_services WHERE id = ?",
       [id],
@@ -293,14 +295,23 @@ async function updateCleaningItem(req, res, next) {
       return res
         .status(404)
         .json({ success: false, message: "Item not found" });
+
     await pool.execute(
       `UPDATE cleaning_services SET
-        label      = COALESCE(?, label),
-        image_id   = COALESCE(?, image_id),
-        sort_order = COALESCE(?, sort_order),
-        is_active  = COALESCE(?, is_active)
+        label       = COALESCE(?, label),
+        description = COALESCE(?, description),
+        image_id    = COALESCE(?, image_id),
+        sort_order  = COALESCE(?, sort_order),
+        is_active   = COALESCE(?, is_active)
        WHERE id = ?`,
-      [label, image_id ?? null, sort_order, is_active ?? null, id],
+      [
+        label,
+        description ?? null,
+        image_id ?? null,
+        sort_order,
+        is_active ?? null,
+        id,
+      ],
     );
     const [[row]] = await pool.execute(
       "SELECT * FROM cleaning_services WHERE id = ?",
@@ -1006,6 +1017,37 @@ async function deleteHeroSlide(req, res, next) {
   }
 }
 
+// ─── CONTACT CONTENT ─────────────────────────────────────────────────────────
+
+async function getContactContent(req, res, next) {
+  try {
+    const [[row]] = await pool.execute("SELECT * FROM contact_content LIMIT 1");
+    const data = await attachMedia(req, row, "bg_image");
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function updateContactContent(req, res, next) {
+  try {
+    const { heading, subheading, bg_image_id } = req.body;
+    await pool.execute(
+      `UPDATE contact_content SET
+        heading     = COALESCE(?, heading),
+        subheading  = COALESCE(?, subheading),
+        bg_image_id = COALESCE(?, bg_image_id)
+       WHERE id = 1`,
+      [heading, subheading, bg_image_id ?? null],
+    );
+    const [[row]] = await pool.execute("SELECT * FROM contact_content LIMIT 1");
+    const data = await attachMedia(req, row, "bg_image");
+    res.json({ success: true, message: "Contact content updated", data });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // ─── FULL SITE DATA (single endpoint for frontend hydration) ─────────────────
 
 async function getSiteData(req, res, next) {
@@ -1048,6 +1090,12 @@ async function getSiteData(req, res, next) {
     const [[footer]] = await pool.execute(
       "SELECT * FROM footer_content LIMIT 1",
     );
+    const [[contactContent]] = await pool.execute(
+      "SELECT * FROM contact_content LIMIT 1",
+    );
+
+    // attach its media:
+    const contactData = await attachMedia(req, contactContent, "bg_image");
 
     // Attach media for all image-bearing sections
     const heroData = await Promise.all(
@@ -1078,6 +1126,7 @@ async function getSiteData(req, res, next) {
         maintenance: { meta: maintMeta, items: maintItems },
         areas: { meta: areasMeta, areas: areasData },
         testimonials,
+        contact: contactData,
         footer: { ...footerData, quick_links: navLinks },
       },
     });
@@ -1129,6 +1178,10 @@ module.exports = {
   updateNavLink,
   getFooter,
   updateFooter,
+  // Contact from Edit
+  getContactContent,
+  updateContactContent,
+
   // Contact
   submitContact,
   getContactSubmissions,
