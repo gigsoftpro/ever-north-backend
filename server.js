@@ -10,6 +10,9 @@ const { testConnection } = require("./config/db");
 const authRoutes = require("./routes/auth");
 const mediaRoutes = require("./routes/media");
 const contentRoutes = require("./routes/content");
+const pagesRoute = require("./routes/pages");
+const renovationRoute = require("./routes/renovation");
+const services = require("./routes/services");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
@@ -19,11 +22,11 @@ const ApiVersion = "/api/v1/";
 
 app.use(
   helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }, // allow images to load cross-origin
+    crossOriginResourcePolicy: { policy: "cross-origin" },
   }),
 );
 
-const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
+const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5174 ")
   .split(",")
   .map((o) => o.trim());
 
@@ -73,6 +76,9 @@ app.use(
 app.use(`${ApiVersion}auth`, authRoutes);
 app.use(`${ApiVersion}media`, mediaRoutes);
 app.use(`${ApiVersion}content`, contentRoutes);
+app.use(`${ApiVersion}pages`, pagesRoute);
+app.use(`${ApiVersion}renovation`, renovationRoute);
+app.use(`${ApiVersion}services`, services);
 
 app.get(`${ApiVersion}health`, (req, res) => {
   res.json({
@@ -84,12 +90,10 @@ app.get(`${ApiVersion}health`, (req, res) => {
 });
 
 app.use((req, res) => {
-  res
-    .status(404)
-    .json({
-      success: false,
-      message: `Route ${req.method} ${req.path} not found`,
-    });
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.method} ${req.path} not found`,
+  });
 });
 
 app.use(errorHandler);

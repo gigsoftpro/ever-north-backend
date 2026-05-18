@@ -286,3 +286,154 @@ CREATE TABLE hero_slides (
 INSERT INTO hero_slides (title, highlighted_word, cta_text, bg_image_id, overlay_image_id, sort_order)
 SELECT title, highlighted_word, cta_text, bg_image_id, overlay_image_id, 0
 FROM hero_section LIMIT 1;
+
+-- ============================================================
+-- schema_renovation.sql  —  run ONCE, safe with existing schema
+-- Creates 5 new tables only. No existing tables are touched.
+-- ============================================================
+
+-- ─── Renovation page meta (single row) ───────────────────────────────────────
+CREATE TABLE IF NOT EXISTS renovation_page (
+  id               INT PRIMARY KEY DEFAULT 1,
+
+  -- ── Hero ──────────────────────────────────────────────────────────────────
+  hero_image_id    INT  NULL,
+  hero_title       VARCHAR(255) DEFAULT 'Property Renovation',
+  hero_tagline     VARCHAR(255) DEFAULT 'Renovate Smart. Profit More.',
+  hero_para_1      TEXT,
+  hero_para_2      TEXT,
+  hero_para_3      TEXT,
+  hero_cta_text    VARCHAR(100) DEFAULT 'Book a Renovation Consultation',
+  hero_cta_href    VARCHAR(255) DEFAULT '#consultation',
+
+  -- ── What We Renovate ──────────────────────────────────────────────────────
+  renovate_title    VARCHAR(255) DEFAULT 'What We Renovate',
+  renovate_subtitle TEXT,
+
+  -- ── Strategic Upgrades ────────────────────────────────────────────────────
+  upgrades_title    VARCHAR(255) DEFAULT 'Strategic Upgrades for Every Type of Owner',
+  upgrades_subtitle TEXT,
+  upgrades_image_id INT NULL,
+
+  -- ── Why EverNorth ──────────────────────────────────────────────────────────
+  why_image_id     INT  NULL,
+  why_title        VARCHAR(255) DEFAULT 'Why EverNorth for Property Renovation',
+
+  -- ── Done Right section ─────────────────────────────────────────────────────
+  done_title       VARCHAR(255) DEFAULT 'A Renovation Done Right Changes Everything',
+  done_para_1      TEXT,
+  done_para_2      TEXT,
+  done_btn1_text   VARCHAR(100) DEFAULT 'Book a Free Consultation',
+  done_btn1_href   VARCHAR(255) DEFAULT '#consultation',
+  done_btn2_text   VARCHAR(100) DEFAULT 'Explore All Our Services',
+  done_btn2_href   VARCHAR(255) DEFAULT '#services',
+  done_image_id    INT  NULL,
+
+  -- ── FAQ ────────────────────────────────────────────────────────────────────
+  faq_title        VARCHAR(255) DEFAULT 'Frequently Asked Questions',
+  faq_image_id     INT  NULL,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (hero_image_id)     REFERENCES media(id) ON DELETE SET NULL,
+  FOREIGN KEY (upgrades_image_id) REFERENCES media(id) ON DELETE SET NULL,
+  FOREIGN KEY (why_image_id)      REFERENCES media(id) ON DELETE SET NULL,
+  FOREIGN KEY (done_image_id)     REFERENCES media(id) ON DELETE SET NULL,
+  FOREIGN KEY (faq_image_id)      REFERENCES media(id) ON DELETE SET NULL
+);
+
+INSERT IGNORE INTO renovation_page
+  (id, hero_title, hero_tagline, hero_para_1, hero_para_2, hero_para_3, hero_cta_text, hero_cta_href,
+   renovate_title, renovate_subtitle,
+   upgrades_title, upgrades_subtitle,
+   why_title,
+   done_title, done_para_1, done_para_2, done_btn1_text, done_btn1_href, done_btn2_text, done_btn2_href,
+   faq_title)
+VALUES (
+  1,
+  'Property Renovation', 'Renovate Smart. Profit More.',
+  'A renovation is not just about making a property look better. It is about making it worth more. The right upgrades in the right places can significantly increase your sale price, attract higher-paying tenants, and set your property apart in a competitive market.',
+  'But a poorly planned renovation? That is money poured into the wrong walls.',
+  'EverNorth takes the guesswork out of property renovation. We combine investor-focused strategy with premium execution to deliver upgrades that actually move the needle, not just ones that look good on a mood board.',
+  'Book a Renovation Consultation', '#consultation',
+  'What We Renovate',
+  'We handle residential and investment property renovations across Canada, covering everything from focused upgrades to full property transformations.',
+  'Strategic Upgrades for Every Type of Owner',
+  'Whether you are flipping a property for resale, preparing a rental for new tenants, or upgrading a long-term hold to increase its market value, our renovation approach is tailored to your specific goal.',
+  'Why EverNorth for Property Renovation',
+  'A Renovation Done Right Changes Everything',
+  'The difference between a property that sits on the market and one that sells in days often comes down to how well it has been renovated and presented. The difference between a tenant who stays for years and one who leaves after months often comes down to the quality of finishes they live with every day.',
+  'EverNorth renovations are built to make that difference. Strategic, well-executed, and delivered to a standard that holds up long after the last contractor has left.',
+  'Book a Free Consultation', '#consultation', 'Explore All Our Services', '#services',
+  'Frequently Asked Questions'
+);
+
+-- ─── What We Renovate cards ───────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS renovation_cards (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  emoji       VARCHAR(20)  DEFAULT '🏠',
+  title       VARCHAR(255) NOT NULL,
+  description TEXT,
+  sort_order  INT          DEFAULT 0,
+  is_active   TINYINT(1)   DEFAULT 1
+);
+
+INSERT IGNORE INTO renovation_cards (id, emoji, title, description, sort_order) VALUES
+  (1, '🍳', 'Kitchen Upgrades',                'The kitchen sells the property. We modernize kitchens with updated cabinetry, countertops, fixtures, and finishes that appeal to today''s buyers and tenants without over-capitalizing on the space.', 0),
+  (2, '🚿', 'Bathroom Renovations',            'Fresh, clean, and well-finished bathrooms consistently rank among the highest-ROI renovations. We upgrade bathrooms to a standard that feels premium without requiring a luxury budget.', 1),
+  (3, '🏠', 'Flooring and Interior Finishes',  'New flooring changes the entire feel of a property. We install and replace hardwood, laminate, tile, and vinyl options that are durable, attractive, and appropriate for the property''s market positioning.', 2),
+  (4, '🎨', 'Painting and Wall Finishes',      'A fresh coat of paint is one of the highest-value renovations per dollar spent. We handle full interior and exterior repaints with color selections that appeal broadly to buyers and tenants.', 3),
+  (5, '🏗️', 'Basement Finishing and Conversions', 'Unfinished basements are untapped income. We convert and finish basement spaces to add livable square footage, create rental suites, or simply improve the property''s overall value and appeal.', 4),
+  (6, '🔨', 'Full Property Renovations',       'For properties that need a complete transformation, we manage the entire process from planning and permits to execution and final finish. One team. One timeline. No juggling multiple contractors.', 5);
+
+-- ─── Owner type cards ─────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS renovation_owner_types (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  title       VARCHAR(255) NOT NULL,
+  description TEXT,
+  sort_order  INT          DEFAULT 0,
+  is_active   TINYINT(1)   DEFAULT 1
+);
+
+INSERT IGNORE INTO renovation_owner_types (id, title, description, sort_order) VALUES
+  (1, 'For investors preparing to sell',   'We focus on upgrades that maximize sale price and minimize time on market. Every dollar spent is evaluated against the return it generates.', 0),
+  (2, 'For landlords and rental owners',   'We prioritize durable, attractive finishes that hold up over time, reduce ongoing maintenance, and justify higher rental rates.', 1),
+  (3, 'For NRI and overseas owners',       'We manage the entire renovation remotely on your behalf, with regular photo and video updates, transparent budgeting, and zero need for you to be on-site.', 2),
+  (4, 'For luxury property owners',        'We deliver high-specification finishes and premium craftsmanship that match the calibre of the property and the expectations of the market it serves.', 3);
+
+-- ─── Why EverNorth bullet items ───────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS renovation_why_items (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  text        VARCHAR(500) NOT NULL,
+  sort_order  INT          DEFAULT 0,
+  is_active   TINYINT(1)   DEFAULT 1
+);
+
+INSERT IGNORE INTO renovation_why_items (id, text, sort_order) VALUES
+  (1, 'ROI-focused planning before any work begins',                      0),
+  (2, 'Experienced renovation team with close attention to detail',        1),
+  (3, 'Transparent budgeting with no hidden costs or surprise bills',      2),
+  (4, 'Full project management from start to finish',                      3),
+  (5, 'Consistent quality standards across every property we work on',     4),
+  (6, 'Remote management available for NRI and overseas owners',           5),
+  (7, 'On-time delivery so your property gets back to market faster',      6);
+
+-- ─── FAQ items ────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS renovation_faq (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  question    VARCHAR(500) NOT NULL,
+  answer      TEXT,
+  sort_order  INT          DEFAULT 0,
+  is_active   TINYINT(1)   DEFAULT 1
+);
+
+INSERT IGNORE INTO renovation_faq (id, question, answer, sort_order) VALUES
+  (1, 'How does EverNorth decide which renovations are worth doing?',
+      'We start every project by understanding your goal, whether that is maximizing sale price, increasing rental income, or improving long-term asset value. From there, we recommend upgrades based on what will deliver the strongest return for your specific property and market. We will never push renovations that do not make financial sense for you.', 0),
+  (2, 'How long does a typical renovation take?',
+      'Timelines vary depending on the scope of work. A focused upgrade such as a kitchen or bathroom renovation typically takes two to four weeks. A full property renovation can take six to twelve weeks. We provide a clear timeline before work begins and communicate proactively if anything changes along the way.', 1),
+  (3, 'Do you handle permits and approvals?',
+      'Yes. For renovations that require permits or local authority approvals, we manage the entire process on your behalf. We know the requirements across Canadian jurisdictions and make sure all work is compliant, documented, and signed off correctly.', 2),
+  (4, 'How is the renovation budget managed?',
+      'We provide a detailed cost breakdown before any work begins so you know exactly what you are paying for. Throughout the project, we track spending transparently and flag any changes before they happen. There are no surprise invoices at the end, just clear, honest budgeting from start to finish.', 3);

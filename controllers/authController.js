@@ -86,7 +86,7 @@ async function updateProfile(req, res, next) {
         .json({ success: false, message: "Email already in use" });
     }
 
-    await pool.execute("UPDATE admins SET name = ?, email = ? WHERE id = ?", [
+    await pool.execute("UPDATE admins SET username = ?, email = ? WHERE id = ?", [
       name?.trim() || null,
       email.trim(),
       req.admin.id,
